@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx.xsd">
+	
+	
+	<context:property-placeholder location="classpath:jdbc.properties"/>
+	<!-- 配置c3p0连接池 --><!--注意“ c3p0的属性名和另外两个连接池的不一样 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="${jdbc.driver}"/>
+		<property name="jdbcUrl" value="${jdbc.url}"/><!-- 等价于jdbc:mysql://localhost:3306/spring4_day2 -->
+		<property name="user" value="${jdbc.username}"/>
+		<property name="password" value="${jdbc.password}"/>
+	</bean>
+	
+	<!-- 扫描spring注解；使 @service、@controller、@repository等注解生效  -->
+  	<context:component-scan base-package="cn.itcast.*"></context:component-scan>
+	
+	<!-- 配置hibernate的其他属性(注意这里class跟使用hibernate配置文件时不一样，这里是注解专用的) -->
+	<bean id="sessionFactroy" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<!-- 引入连接池 -->
+		<property name="dataSource" ref="dataSource"/>
+		<property name="hibernateProperties">
+			<props>
+				<!-- 方言 -->
+		 		<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+		 		<!-- 显示sql语句 -->
+		 		<prop key="hibernate.show_sql">true</prop>
+		 		<!-- 格式化sql -->
+		 		<prop key="hibernate.format_sql">true</prop>
+		 		<!-- 自动提交事务 -->
+		 		<prop key="hibernate.connection.autocommit"></prop>
+		 		<!-- 帮你创建有映射但是还没创建的表 ，如果有那就直接用 -->
+		 		<prop key="hibernate.hbm2ddl.auto">update</prop>	
+			</props>
+		</property>
+		<!-- 扫描实体类 -->
+		<property name="packagesToScan">
+			<list>
+				<value>cn.itcast.vo</value>
+			</list>
+		</property>
+	</bean>
+		<!-- 定义hibernate模板 -->
+		<bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
+			<property name="sessionFactory" ref="sessionFactroy"/>
+		</bean>
+	
+	<!-- 事务管理 -->
+	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactroy"/>
+	</bean>
+	<!-- 开启注解的事务管理 -->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+	
+</beans>
